@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -17,6 +18,12 @@ import (
 
 // flags
 var TmplhateFuncs = template.FuncMap{
+	"lower": func(s string) string {
+		return cases.Lower(language.English).String(s)
+	},
+	"upper": func(s string) string {
+		return cases.Upper(language.English).String(s)
+	},
 	"mul": func(a int, b int) int {
 		return a * b
 	},
@@ -24,7 +31,7 @@ var TmplhateFuncs = template.FuncMap{
 
 // interface for tmplhate
 type Tmplhater interface {
-	LoadVars(io.Reader)
+	LoadVars(io.Reader, bool, string)
 	ReadTemplate(io.Reader)
 	Write(io.Writer) error
 	ValidateTemplate() error
@@ -32,9 +39,13 @@ type Tmplhater interface {
 
 // impl of tmplhate interface
 type Tmplhate struct {
-	String string
-	Tmpl   *template.Template
-	Vars   map[string]any `yaml:"vars,omitempty,flow"`
+	Caser         cases.Caser
+	Language      language.Tag
+	NormalizeVars bool
+	String        string
+	Tmpl          *template.Template
+	Vars          map[string]any `yaml:"vars,omitempty,flow"`
+	VarsCase      string
 }
 
 // START Global helpers
@@ -89,37 +100,67 @@ func (t *Tmplhate) GetReader(location string) io.Reader {
 	return nil
 }
 
+// method to set a cases.Caser
+func (t *Tmplhate) LoadCaser() {
+	switch t.VarsCase {
+	case "lower":
+		t.Caser = cases.Lower(t.Language)
+	case "upper":
+		t.Caser = cases.Upper(t.Language)
+	case "title":
+		t.Caser = cases.Title(t.Language)
+	default:
+		log.Fatalf("Caser type '%s' is invalid.", t.VarsCase)
+	}
+}
+
 // method to load env vars into object
 func (t *Tmplhate) LoadEnvVars() {
+	var es string
 	env := make(map[string]any)
 	for _, e := range os.Environ() {
+		var ks string
 		p := strings.SplitN(e, "=", 2)
-		env[strings.ToUpper(p[0])] = p[1]
+		es = "env" // default Caser is 'lower'
+		ks = p[0]
+		env[ks] = p[1]
+		if t.NormalizeVars {
+			nks := t.Caser.String(p[0])
+			env[nks] = p[1]
+		}
 	}
 
-	t.Vars["Env"] = env
+	if t.NormalizeVars {
+		nes := t.Caser.String("env")
+		t.Vars[nes] = env
+	}
+
+	t.Vars[es] = env
 }
 
 // method to load variables into object
 func (t *Tmplhate) LoadVars(r io.Reader) {
-	t.Vars = make(map[string]any)
 	if r != nil {
 		if closer, ok := r.(io.ReadCloser); ok {
 			defer closer.Close()
 		}
 		bytes := Read(r)
-		caser := cases.Title(language.English)
 		valuesMap := make(map[string]any)
 		err := yaml.Unmarshal(bytes, &valuesMap)
 		if err != nil {
 			log.Fatalf("Unable to load vars: %v", err)
 		}
 		for k, v := range valuesMap {
-			valuesMap[caser.String(k)] = v
+			var ks string
+			if t.NormalizeVars {
+				ks = t.Caser.String(k)
+			} else {
+				ks = k
+			}
+			valuesMap[ks] = v
 		}
 		t.Vars = valuesMap
 	}
-	t.LoadEnvVars()
 }
 
 // method to get template from reader and load
@@ -147,6 +188,30 @@ func (t *Tmplhate) WriteTemplate(w io.Writer) {
 	if err != nil {
 		log.Fatalf("Unable to write: %v", err)
 	}
+}
+
+func (t *Tmplhate) Init(tmplLocation string, varsLocation string, dontNormalize bool, varsCase string) {
+	// create map for vars
+	t.Vars = make(map[string]any)
+	// set attrs of object:
+	//   Normalize is opposite of dontNormalize value
+	t.NormalizeVars, t.VarsCase = !dontNormalize, varsCase
+	// read from location if one is provided
+	// else, try to read from stdin
+	if tmplLocation != "" {
+		t.LoadTemplate(t.GetReader(tmplLocation))
+	} else {
+		fileInfo, _ := os.Stdin.Stat()
+		if fileInfo.Mode()&os.ModeCharDevice == 0 {
+			t.LoadTemplate(os.Stdin)
+		} else {
+			fmt.Println("Use 'tmplhate --help' for usage.")
+			os.Exit(1)
+		}
+	}
+	t.LoadCaser()
+	t.LoadVars(t.GetReader(varsLocation))
+	t.LoadEnvVars()
 }
 
 // END Tmplhate methods

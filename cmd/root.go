@@ -31,10 +31,12 @@ import (
 )
 
 var (
-	cfgFile      string
-	printVersion bool
-	tmplLocation string
-	varsLocation string
+	cfgFile           string
+	dontNormalizeVars bool
+	printVersion      bool
+	tmplLocation      string
+	varsCase          string
+	varsLocation      string
 )
 
 var Version = "development"
@@ -49,18 +51,9 @@ var rootCmd = &cobra.Command{
 		if printVersion {
 			fmt.Printf("Version: %s\n", Version)
 			os.Exit(0)
-		} else if tmplLocation != "" {
-			h8.LoadTemplate(h8.GetReader(tmplLocation))
-		} else {
-			fileInfo, _ := os.Stdin.Stat()
-			if fileInfo.Mode()&os.ModeCharDevice == 0 {
-				h8.LoadTemplate(os.Stdin)
-			} else {
-				fmt.Println("Use 'tmplhate --help' for usage.")
-				os.Exit(1)
-			}
 		}
-		h8.LoadVars(h8.GetReader(varsLocation))
+
+		h8.Init(tmplLocation, varsLocation, dontNormalizeVars, varsCase)
 		h8.WriteTemplate(os.Stdout)
 	},
 }
@@ -84,6 +77,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.tmplhate.yaml)")
 	rootCmd.PersistentFlags().StringVarP(&tmplLocation, "tmpl", "t", "", ".tmpl location")
 	rootCmd.PersistentFlags().StringVarP(&varsLocation, "values", "l", "", "values location")
+	rootCmd.PersistentFlags().BoolVar(&dontNormalizeVars, "dont-normalize", false, "don't normalize value cases (default is false)")
+	rootCmd.PersistentFlags().StringVar(&varsCase, "case", "lower", "case used to reference values ['lower', 'upper', 'title'] (default is 'lower')")
 	rootCmd.PersistentFlags().BoolVarP(&printVersion, "version", "v", false, "print version info")
 	rootCmd.MarkFlagRequired("values")
 }
