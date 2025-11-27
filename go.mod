@@ -1,4 +1,4 @@
-module tmplhate
+module github.com/ericpfisher/tmplhate
 
 go 1.22
 
