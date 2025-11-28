@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package main
 
-import "tmplhate/cmd"
+import "github.com/ericpfisher/tmplhate/cmd"
 
 func main() {
 	cmd.Execute()

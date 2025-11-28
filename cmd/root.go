@@ -23,8 +23,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/ericpfisher/tmplhate/core"
 	"os"
-	"tmplhate/core"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
