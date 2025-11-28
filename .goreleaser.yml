@@ -14,7 +14,6 @@ builds:
       - -X github.com/ericpfisher/tmplhate/cmd.Version={{.Version}}
       - -X github.com/ericpfisher/tmplhate/cmd.Commit={{.ShortCommit}}
       - -X github.com/ericpfisher/tmplhate/cmd.Date={{.Date}}
-      - -X github.com/ericpfisher/tmplhate/cmd.Dirty={{.Dirty}}
     env:
       - CGO_ENABLED=0
 
