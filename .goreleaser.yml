@@ -31,6 +31,13 @@ dockers_v2:
       - v{{ .Version }}
       - latest
     dockerfile: Dockerfile
+    labels:
+      "org.opencontainers.image.description": "tmplhate - Go template app"
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
 
 sboms:
   - id: default
