@@ -1,56 +1,40 @@
+version: 2
 project_name: tmplhate
 
 # Cross-platform Go builds
-build:
-  goos:
-    - linux
-    - darwin
-    - windows
-  goarch:
-    - amd64
-    - arm64
-  ldflags:
-    - -X github.com/ericpfisher/tmplhate/cmd.Version={{.Version}}
-    - -X github.com/ericpfisher/tmplhate/cmd.Commit={{.ShortCommit}}
-    - -X github.com/ericpfisher/tmplhate/cmd.Date={{.Date}}
-    - -X github.com/ericpfisher/tmplhate/cmd.Dirty={{.Dirty}}
-  env:
-    - CGO_ENABLED=0
-
-archives:
-  - format: tar.gz
-    files:
-      - LICENSE
-
-# Docker multi-arch build
-dockers:
-  - image_templates:
-      - ghcr.io/{{ .GitHubOwner }}/{{ .ProjectName }}:{{ .Version }}
-      - ghcr.io/{{ .GitHubOwner }}/{{ .ProjectName }}:latest
-    dockerfile: Dockerfile
-    goos: linux
+builds:
+  - goos:
+      - linux
+      - darwin
+      - windows
     goarch:
       - amd64
       - arm64
-    build_flag_templates:
-      - "--platform={{.GOOS}}/{{.GOARCH}}"
+    ldflags:
+      - -X github.com/ericpfisher/tmplhate/cmd.Version={{.Version}}
+      - -X github.com/ericpfisher/tmplhate/cmd.Commit={{.ShortCommit}}
+      - -X github.com/ericpfisher/tmplhate/cmd.Date={{.Date}}
+      - -X github.com/ericpfisher/tmplhate/cmd.Dirty={{.Dirty}}
+    env:
+      - CGO_ENABLED=0
 
-# Optional: Homebrew tap
-brews:
-  - name: tmplhate
-    github:
-      owner: ericpfisher
-      name: homebrew-tap
-    folder: Formula
-    commit_author:
-      name: "GitHub Actions"
-      email: "actions@github.com"
+archives:
+  - formats:
+      - tar.gz
+    files:
+      - LICENSE
 
-# Security: SLSA provenance + SBOM
-slsa:
-  enabled: true
-sbom:
-  tool: syft
+# Docker multi-arch build (default)
+dockers_v2:
+  - images:
+      - ghcr.io/{{ .GitHubOwner }}/{{ .ProjectName }}
+    tags:
+      - v{{ .Version }}
+      - latest
+    dockerfile: Dockerfile
+
+sboms:
+  - id: default
 
 # Release to GitHub
 release:
