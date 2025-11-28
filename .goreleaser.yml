@@ -26,7 +26,6 @@ archives:
 # Docker multi-arch build (default)
 dockers_v2:
   - images:
-      - ericpfisher/tmplhate
       - ghcr.io/ericpfisher/tmplhate
     tags:
       - v{{ .Version }}
