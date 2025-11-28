@@ -36,6 +36,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
+          install-only: true
 
       - name: Run GoReleaser
         env:
