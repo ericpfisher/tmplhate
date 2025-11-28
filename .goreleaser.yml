@@ -16,10 +16,11 @@ build:
     - -X github.com/ericpfisher/tmplhate/cmd.Dirty={{.Dirty}}
   env:
     - CGO_ENABLED=0
-archive:
-  format: tar.gz
-  files:
-    - LICENSE
+
+archives:
+  - format: tar.gz
+    files:
+      - LICENSE
 
 # Docker multi-arch build
 dockers:
@@ -35,17 +36,19 @@ dockers:
       - "--platform={{.GOOS}}/{{.GOARCH}}"
 
 # Optional: Homebrew tap
-brew:
-  github:
-    owner: ericpfisher
-    name: homebrew-tap
-  folder: Formula
-  commit_author:
-    name: "GitHub Actions"
-    email: "actions@github.com"
+brews:
+  - name: tmplhate
+    github:
+      owner: ericpfisher
+      name: homebrew-tap
+    folder: Formula
+    commit_author:
+      name: "GitHub Actions"
+      email: "actions@github.com"
 
 # Security: SLSA provenance + SBOM
-slsa: true
+slsa:
+  enabled: true
 sbom:
   tool: syft
 
